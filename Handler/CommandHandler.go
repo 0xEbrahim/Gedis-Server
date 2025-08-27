@@ -1,15 +1,17 @@
-package main
+package Handler
 
 import (
+	"Gedis-Server/DB"
 	"strconv"
 	"strings"
 )
 
 type CommandHandler struct {
+	db *DB.Database
 }
 
-func initCommandHandler() *CommandHandler {
-	return &CommandHandler{}
+func InitCommandHandler() *CommandHandler {
+	return &CommandHandler{db: DB.GetDBInstance()}
 }
 
 func (ch *CommandHandler) parseResp(resp string, index *int) []string {
@@ -91,7 +93,7 @@ func (ch *CommandHandler) parseBulkString(str string, index *int) []string {
 	*index = *index + 1
 	tmp := *index
 	tot := ""
-	for *index < tmp+int(length) {
+	for *index < tmp+length {
 		*index = *index + 1
 		tot = tot + string(str[*index])
 	}
@@ -127,15 +129,20 @@ func (ch *CommandHandler) parseBigNums(str string, index *int) []string {
 	return ch.parseSimpleError(str, index)
 }
 
-func (ch *CommandHandler) execCommand(str string) string {
+func (ch *CommandHandler) ExecCommand(str string) string {
 	index := 0
 	tokens := ch.parseResp(str, &index)
-	print(str)
 	if len(tokens) == 0 {
 		return "-ERROR: Empty command\r\n"
 	}
 	command := tokens[0]
 	command = strings.ToUpper(command)
-
-	return "+OK\r\n"
+	switch command {
+	case "SET":
+		return ch.db.Set(tokens)
+	case "GET":
+		return ch.db.Get(tokens)
+	default:
+		return "-ERR UNKNOWN COMMAND\r\n"
+	}
 }
