@@ -1,0 +1,54 @@
+package main
+
+type CommandHandler struct {
+}
+
+func initCommandHandler() *CommandHandler {
+	return &CommandHandler{}
+}
+
+/**
+*2\r\n$2ME\r\n$9ljsdhchjdchjdsc\r\n
+ */
+
+func (ch *CommandHandler) parseResp(resp string, index *int) []string {
+
+	switch resp[*index] {
+	case '*':
+		*index = *index + 1
+		return ch.parseArray(resp, index)
+	case '$':
+		*index = *index + 1
+		return ch.parseSimpleString(resp, index)
+	default:
+		return []string{}
+	}
+}
+
+func (ch *CommandHandler) parseArray(str string, index *int) []string {
+	var tokens []string
+	length := str[*index] - '0'
+	for length > 0 {
+		*index = *index + 1
+		if str[*index] == '\r' || str[*index] == '\n' {
+			continue
+		}
+		tokens = append(tokens, ch.parseResp(str, index)...)
+		length--
+	}
+	return tokens
+}
+
+func (ch *CommandHandler) parseSimpleString(str string, index *int) []string {
+	var tokens []string
+	length := str[*index] - '0'
+	*index = *index + 2
+	tmp := *index
+	tot := ""
+	for *index < tmp+int(length) {
+		*index = *index + 1
+		tot = tot + string(str[*index])
+	}
+	tokens = append(tokens, tot)
+	return tokens
+}
