@@ -1,6 +1,9 @@
 package main
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 type CommandHandler struct {
 }
@@ -8,10 +11,6 @@ type CommandHandler struct {
 func initCommandHandler() *CommandHandler {
 	return &CommandHandler{}
 }
-
-/**
-*2\r\n$2ME\r\n$9ljsdhchjdchjdsc\r\n
- */
 
 func (ch *CommandHandler) parseResp(resp string, index *int) []string {
 
@@ -40,6 +39,12 @@ func (ch *CommandHandler) parseResp(resp string, index *int) []string {
 	case '!':
 		*index = *index + 1
 		return ch.parseBulkErrors(resp, index)
+	case '_':
+		*index = *index + 1
+		return []string{}
+	case '=':
+		*index = *index + 1
+		return ch.parseVerbString(resp, index)
 	default:
 		return []string{}
 	}
@@ -98,6 +103,10 @@ func (ch *CommandHandler) parseBulkErrors(str string, index *int) []string {
 	return ch.parseBulkString(str, index)
 }
 
+func (ch *CommandHandler) parseVerbString(str string, index *int) []string {
+	return ch.parseBulkString(str, index)
+}
+
 func (ch *CommandHandler) parseSimpleError(str string, index *int) []string {
 	return ch.parseBulkString(str, index)
 }
@@ -116,4 +125,16 @@ func (ch *CommandHandler) parseDoubles(str string, index *int) []string {
 
 func (ch *CommandHandler) parseBigNums(str string, index *int) []string {
 	return ch.parseSimpleError(str, index)
+}
+
+func (ch *CommandHandler) execCommand(str string) string {
+	index := 0
+	tokens := ch.parseResp(str, &index)
+	if len(tokens) == 0 {
+		return "-ERROR: Empty command\r\n"
+	}
+	command := tokens[0]
+	command = strings.ToUpper(command)
+	
+	return "+OK"
 }
