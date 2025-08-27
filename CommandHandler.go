@@ -17,9 +17,12 @@ func (ch *CommandHandler) parseResp(resp string, index *int) []string {
 	case '*':
 		*index = *index + 1
 		return ch.parseArray(resp, index)
-	case '$':
+	case '+':
 		*index = *index + 1
 		return ch.parseSimpleString(resp, index)
+	case '$':
+		*index = *index + 1
+		return ch.parseBulkString(resp, index)
 	default:
 		return []string{}
 	}
@@ -40,6 +43,17 @@ func (ch *CommandHandler) parseArray(str string, index *int) []string {
 }
 
 func (ch *CommandHandler) parseSimpleString(str string, index *int) []string {
+	var tokens []string
+	tmp := ""
+	for str[*index] != '\r' {
+		tmp = tmp + string(str[*index])
+		*index = *index + 1
+	}
+	tokens = append(tokens, tmp)
+	return tokens
+}
+
+func (ch *CommandHandler) parseBulkString(str string, index *int) []string {
 	var tokens []string
 	length := str[*index] - '0'
 	*index = *index + 2

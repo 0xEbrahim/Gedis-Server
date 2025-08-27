@@ -9,7 +9,7 @@ func main() {
 	//redisServer := initServer(port)
 	//redisServer.run()
 	cmdHandler := initCommandHandler()
-	cmd := "*2\r\n$5\r\nHELLO\r\n*2\r\n$2\r\nHI\r\n$2\r\nHI\r\n"
+	cmd := "+PING\r\n"
 	index := 0
 	resp := cmdHandler.parseResp(cmd, &index)
 	for i := 0; i < len(resp); i++ {
