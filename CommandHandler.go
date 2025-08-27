@@ -26,6 +26,9 @@ func (ch *CommandHandler) parseResp(resp string, index *int) []string {
 	case '-':
 		*index = *index + 1
 		return ch.parseSimpleError(resp, index)
+	case '#':
+		*index = *index + 1
+		return ch.parseBoolean(resp, index)
 	default:
 		return []string{}
 	}
@@ -76,4 +79,8 @@ func (ch *CommandHandler) parseSimpleError(str string, index *int) []string {
 
 func (ch *CommandHandler) parseIntegers(str string, index *int) []string {
 	return ch.parseSimpleString(str, index)
+}
+
+func (ch *CommandHandler) parseBoolean(str string, index *int) []string {
+	return ch.parseSimpleError(str, index)
 }
