@@ -23,6 +23,9 @@ func (ch *CommandHandler) parseResp(resp string, index *int) []string {
 	case '$':
 		*index = *index + 1
 		return ch.parseBulkString(resp, index)
+	case '-':
+		*index = *index + 1
+		return ch.parseSimpleError(resp, index)
 	default:
 		return []string{}
 	}
@@ -65,4 +68,8 @@ func (ch *CommandHandler) parseBulkString(str string, index *int) []string {
 	}
 	tokens = append(tokens, tot)
 	return tokens
+}
+
+func (ch *CommandHandler) parseSimpleError(str string, index *int) []string {
+	return ch.parseBulkString(str, index)
 }
