@@ -130,11 +130,12 @@ func (ch *CommandHandler) parseBigNums(str string, index *int) []string {
 func (ch *CommandHandler) execCommand(str string) string {
 	index := 0
 	tokens := ch.parseResp(str, &index)
+	print(str)
 	if len(tokens) == 0 {
 		return "-ERROR: Empty command\r\n"
 	}
 	command := tokens[0]
 	command = strings.ToUpper(command)
-	
+
 	return "+OK"
 }
