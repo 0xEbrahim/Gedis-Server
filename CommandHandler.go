@@ -73,3 +73,7 @@ func (ch *CommandHandler) parseBulkString(str string, index *int) []string {
 func (ch *CommandHandler) parseSimpleError(str string, index *int) []string {
 	return ch.parseBulkString(str, index)
 }
+
+func (ch *CommandHandler) parseIntegers(str string, index *int) []string {
+	return ch.parseSimpleString(str, index)
+}
