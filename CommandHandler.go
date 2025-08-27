@@ -137,5 +137,5 @@ func (ch *CommandHandler) execCommand(str string) string {
 	command := tokens[0]
 	command = strings.ToUpper(command)
 
-	return "+OK"
+	return "+OK\r\n"
 }
