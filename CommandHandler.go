@@ -1,5 +1,7 @@
 package main
 
+import "strconv"
+
 type CommandHandler struct {
 }
 
@@ -29,6 +31,15 @@ func (ch *CommandHandler) parseResp(resp string, index *int) []string {
 	case '#':
 		*index = *index + 1
 		return ch.parseBoolean(resp, index)
+	case ',':
+		*index = *index + 1
+		return ch.parseDoubles(resp, index)
+	case '(':
+		*index = *index + 1
+		return ch.parseBigNums(resp, index)
+	case '!':
+		*index = *index + 1
+		return ch.parseBulkErrors(resp, index)
 	default:
 		return []string{}
 	}
@@ -36,7 +47,12 @@ func (ch *CommandHandler) parseResp(resp string, index *int) []string {
 
 func (ch *CommandHandler) parseArray(str string, index *int) []string {
 	var tokens []string
-	length := str[*index] - '0'
+	ln := ""
+	for str[*index] != '\r' {
+		ln = ln + string(str[*index])
+		*index = *index + 1
+	}
+	length, _ := strconv.Atoi(ln)
 	for length > 0 {
 		*index = *index + 1
 		if str[*index] == '\r' || str[*index] == '\n' {
@@ -61,8 +77,13 @@ func (ch *CommandHandler) parseSimpleString(str string, index *int) []string {
 
 func (ch *CommandHandler) parseBulkString(str string, index *int) []string {
 	var tokens []string
-	length := str[*index] - '0'
-	*index = *index + 2
+	ln := ""
+	for str[*index] != '\r' {
+		ln = ln + string(str[*index])
+		*index = *index + 1
+	}
+	length, _ := strconv.Atoi(ln)
+	*index = *index + 1
 	tmp := *index
 	tot := ""
 	for *index < tmp+int(length) {
@@ -71,6 +92,10 @@ func (ch *CommandHandler) parseBulkString(str string, index *int) []string {
 	}
 	tokens = append(tokens, tot)
 	return tokens
+}
+
+func (ch *CommandHandler) parseBulkErrors(str string, index *int) []string {
+	return ch.parseBulkString(str, index)
 }
 
 func (ch *CommandHandler) parseSimpleError(str string, index *int) []string {
@@ -82,5 +107,13 @@ func (ch *CommandHandler) parseIntegers(str string, index *int) []string {
 }
 
 func (ch *CommandHandler) parseBoolean(str string, index *int) []string {
+	return ch.parseSimpleError(str, index)
+}
+
+func (ch *CommandHandler) parseDoubles(str string, index *int) []string {
+	return ch.parseSimpleError(str, index)
+}
+
+func (ch *CommandHandler) parseBigNums(str string, index *int) []string {
 	return ch.parseSimpleError(str, index)
 }
