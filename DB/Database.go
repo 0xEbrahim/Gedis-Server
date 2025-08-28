@@ -506,6 +506,7 @@ func (db *Database) HSet(tokens []string) string {
 		field := tokens[i]
 		value := tokens[i+1]
 		db.hash[key][field] = value
+		cnt = cnt + 1
 	}
 	return ":" + strconv.Itoa(cnt) + "\r\n"
 }
@@ -573,28 +574,49 @@ func (db *Database) HKeys(tokens []string) string {
 	if len(tokens) < 2 {
 		return "-ERR: HKEYS command requires a key\r\n"
 	}
-	return ""
-
+	var keys []string
+	for _, v := range db.hash {
+		for k, _ := range v {
+			keys = append(keys, k)
+		}
+	}
+	return encodeArray(keys)
 }
 
 func (db *Database) HVals(tokens []string) string {
 	if len(tokens) < 2 {
 		return "-ERR: HVALS command requires a key\r\n"
 	}
-	return ""
-
+	var keys []string
+	for _, v := range db.hash {
+		for _, V := range v {
+			keys = append(keys, V)
+		}
+	}
+	return encodeArray(keys)
 }
 func (db *Database) HLen(tokens []string) string {
 	if len(tokens) < 2 {
 		return "-ERR: HLEN command requires a key\r\n"
 	}
-	return ""
+	cnt := 0
+	for _, v := range db.hash {
+		for range v {
+			cnt = cnt + 1
+		}
+	}
+	return ":" + strconv.Itoa(cnt) + "\r\n"
 }
 
 func (db *Database) HMSet(tokens []string) string {
 	if len(tokens) < 4 || len(tokens)%2 == 1 {
 		return "-ERR: HMSET command requires key, field and a value\r\n"
 	}
-
+	key := tokens[1]
+	for i := 2; i < len(tokens); i = i + 2 {
+		field := tokens[i]
+		value := tokens[i+1]
+		db.hash[key][field] = value
+	}
 	return ":OK\r\n"
 }
