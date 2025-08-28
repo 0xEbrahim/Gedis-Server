@@ -102,7 +102,7 @@ func (db *Database) Load() {
 		case "RPUSH":
 			db.RPush(tokens)
 		case "HSET":
-			db.Hset(tokens)
+			db.HSet(tokens)
 		default:
 
 		}
@@ -118,9 +118,6 @@ func (db *Database) Set(tokens []string) string {
 	}
 	db.kv[tokens[1]] = tokens[2]
 	return "+OK\r\n"
-}
-func (db *Database) Hset(tokens []string) string {
-	return ""
 }
 
 func (db *Database) FlushAll(tokens []string) string {
@@ -497,4 +494,69 @@ func (db *Database) LRange(tokens []string) string {
 		arr = append(arr, lst[i])
 	}
 	return encodeArray(arr)
+}
+
+func (db *Database) HSet(tokens []string) string {
+	if len(tokens) < 4 || len(tokens)%2 == 1 {
+		return "-ERR: HSET command requires key, field and a value\r\n"
+	}
+
+	return ":1\r\n"
+}
+func (db *Database) HGet(tokens []string) string {
+	if len(tokens) < 3 {
+		return "-ERR: HGET command requires key and field \r\n"
+	}
+	return ""
+}
+
+func (db *Database) HExists(tokens []string) string {
+	if len(tokens) < 3 {
+		return "-ERR: HEXISTS command requires a key and a field\r\n"
+	}
+	return ":1\r\n"
+}
+
+func (db *Database) HDel(tokens []string) string {
+	if len(tokens) < 3 {
+		return "-ERR: HDEL command requires a key and at least one field\r\n"
+	}
+	return ":1\r\n"
+}
+
+func (db *Database) HGetAll(tokens []string) string {
+	if len(tokens) < 2 {
+		return "-ERR: HGETALL command requires a key\r\n"
+	}
+	return ""
+}
+
+func (db *Database) HKeys(tokens []string) string {
+	if len(tokens) < 2 {
+		return "-ERR: HKEYS command requires a key\r\n"
+	}
+	return ""
+
+}
+
+func (db *Database) HVals(tokens []string) string {
+	if len(tokens) < 2 {
+		return "-ERR: HVALS command requires a key\r\n"
+	}
+	return ""
+
+}
+func (db *Database) HLen(tokens []string) string {
+	if len(tokens) < 2 {
+		return "-ERR: HLEN command requires a key\r\n"
+	}
+	return ""
+}
+
+func (db *Database) HMSet(tokens []string) string {
+	if len(tokens) < 4 || len(tokens)%2 == 1 {
+		return "-ERR: HMSET command requires key, field and a value\r\n"
+	}
+
+	return ":OK\r\n"
 }
