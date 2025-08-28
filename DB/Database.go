@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -110,10 +111,12 @@ func (db *Database) Load() {
 }
 
 func (db *Database) Set(tokens []string) string {
+	db.mtx.Lock()
 	if len(tokens) < 3 {
 		return "-ERR: SET command required a key and a value\r\n"
 	}
 	db.kv[tokens[1]] = tokens[2]
+	db.mtx.Unlock()
 	return "+OK\r\n"
 }
 func (db *Database) Lpush(token []string) string {
@@ -124,35 +127,103 @@ func (db *Database) Hset(tokens []string) string {
 }
 
 func (db *Database) FlushAll(tokens []string) string {
+	db.mtx.Lock()
+	db.kv = make(map[string]string)
+	db.list = make(map[string][]string)
+	db.hash = make(map[string]map[string]string)
+	db.mtx.Unlock()
 	return "+OK\r\n"
 }
 
 func (db *Database) Keys(tokens []string) string {
-	return ""
+	db.mtx.Lock()
+	var keys []string
+	for k, _ := range db.kv {
+		keys = append(keys, k)
+	}
+	for k, _ := range db.list {
+		keys = append(keys, k)
+	}
+	for k, _ := range db.hash {
+		keys = append(keys, k)
+	}
+	db.mtx.Unlock()
+	str := "*" + strconv.Itoa(len(keys)) + "\r\n"
+	for _, it := range keys {
+		str = str + "$" + strconv.Itoa(len(it)) + "\r\n" + it + "\r\n"
+	}
+	return str
 }
 
 func (db *Database) Type(tokens []string) string {
+	db.mtx.Lock()
 	if len(tokens) < 2 {
 		return "-ERR: TYPE commands requires a key\r\n"
 	}
-	return ""
+	key := tokens[1]
+	_, inKV := db.kv[key]
+	_, inList := db.list[key]
+	_, inHash := db.hash[key]
+	exists := inKV || inList || inHash
+	if !exists {
+		return "_\r\n"
+	}
+	var str reflect.Type
+	if inKV {
+		str = reflect.TypeOf(db.kv[key])
+	} else if inList {
+		str = reflect.TypeOf(db.list[key])
+	} else {
+		str = reflect.TypeOf(db.hash[key])
+	}
+	db.mtx.Unlock()
+	return "$" + strconv.Itoa(len(str.Name())) + "\r\n" + str.Name() + "\r\n"
 }
 
 func (db *Database) Del(tokens []string) string {
+	db.mtx.Lock()
 	if len(tokens) < 2 {
 		return "-ERR: DEL|UNLINK commands requires a key\r\n"
 	}
-	return ""
+	delete(db.kv, tokens[1])
+	delete(db.list, tokens[1])
+	delete(db.hash, tokens[1])
+	db.mtx.Unlock()
+
+	return "+OK\r\n"
 }
 
 func (db *Database) Expire(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+
 	if len(tokens) < 3 {
-		return "-ERR: EXPIRE command requires a key and a time in seconds"
+		return "-ERR: EXPIRE command requires a key and a time in seconds\r\n"
 	}
-	return ""
+
+	key := tokens[1]
+	_, inKV := db.kv[key]
+	_, inList := db.list[key]
+	_, inHash := db.hash[key]
+	exists := inKV || inList || inHash
+	if !exists {
+		return "-ERR: Key does not exist\r\n"
+	}
+
+	seconds, err := strconv.Atoi(tokens[2])
+	if err != nil {
+		return "-ERR: time must be an integer\r\n"
+	}
+
+	exp := time.Now().Add(time.Duration(seconds) * time.Second)
+	db.exp[key] = exp
+
+	return "#true\r\n"
 }
 
 func (db *Database) Rename(tokens []string) string {
+	db.mtx.Lock()
+
 	if len(tokens) < 3 {
 		return "-ERR: RENAME command requires the old key and the new key"
 	}
@@ -160,10 +231,12 @@ func (db *Database) Rename(tokens []string) string {
 }
 
 func (db *Database) Get(tokens []string) string {
+	db.mtx.Lock()
 	if len(tokens) < 2 {
 		return "-ERR: Get commands requires a key\r\n"
 	}
 	str, ok := db.kv[tokens[1]]
+	db.mtx.Unlock()
 	var ret string
 	if ok {
 		ret = "$" + strconv.Itoa(len(str)) + "\r\n" + str + "\r\n"
