@@ -162,6 +162,8 @@ func (ch *CommandHandler) ExecCommand(str string) string {
 		return ch.db.Expire(tokens)
 	case "RENAME":
 		return ch.db.Rename(tokens)
+	case "LLEN":
+		return ch.db.Llen(tokens)
 	default:
 		return "-ERR UNKNOWN COMMAND\r\n"
 	}

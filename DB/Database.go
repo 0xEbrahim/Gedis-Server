@@ -270,3 +270,15 @@ func (db *Database) Get(tokens []string) string {
 	}
 	return ret
 }
+
+func (db *Database) Llen(tokens []string) string {
+	if len(tokens) < 2 {
+		return "-ERR: LLEN command required a key\r\n"
+	}
+	key := tokens[1]
+	v, ok := db.list[key]
+	if !ok {
+		return "_\r\n"
+	}
+	return ":" + strconv.Itoa(len(v)) + "\r\n"
+}
