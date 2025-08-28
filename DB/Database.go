@@ -286,17 +286,27 @@ func (db *Database) LPush(tokens []string) string {
 	}
 	v, ok := db.list[tokens[1]]
 	if !ok {
-		return "_\r\n"
+		return ":0\r\n"
 	}
 	v = append(
 		[]string{
 			tokens[2],
 		}, v...)
 	db.list[tokens[1]] = v
-	return ""
+	return ":" + strconv.Itoa(len(v)) + "\r\n"
 }
 func (db *Database) RPush(tokens []string) string {
-	return ""
+	if len(tokens) < 3 {
+		return "-ERR: RPUSH command requires a key and a value\r\n"
+	}
+	v, ok := db.list[tokens[1]]
+	if !ok {
+		return ":0\r\n"
+	}
+	v = append(
+		v, tokens[2])
+	db.list[tokens[1]] = v
+	return ":" + strconv.Itoa(len(v)) + "\r\n"
 
 }
 func (db *Database) LPop(tokens []string) string {
