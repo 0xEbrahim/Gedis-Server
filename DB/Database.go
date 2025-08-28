@@ -113,6 +113,7 @@ func (db *Database) Load() {
 func (db *Database) Set(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
 	if len(tokens) < 3 {
 		return "-ERR: SET command required a key and a value\r\n"
 	}
@@ -134,6 +135,7 @@ func (db *Database) FlushAll(tokens []string) string {
 func (db *Database) Keys(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
 
 	var keys []string
 	for k, _ := range db.kv {
@@ -155,6 +157,8 @@ func (db *Database) Keys(tokens []string) string {
 func (db *Database) Type(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 2 {
 		return "-ERR: TYPE commands requires a key\r\n"
 	}
@@ -180,6 +184,7 @@ func (db *Database) Type(tokens []string) string {
 func (db *Database) Del(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
 
 	if len(tokens) < 2 {
 		return "-ERR: DEL|UNLINK commands requires a key\r\n"
@@ -194,6 +199,7 @@ func (db *Database) Del(tokens []string) string {
 func (db *Database) Expire(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
 
 	if len(tokens) < 3 {
 		return "-ERR: EXPIRE command requires a key and a time in seconds\r\n"
@@ -219,9 +225,25 @@ func (db *Database) Expire(tokens []string) string {
 	return "#true\r\n"
 }
 
+func (db *Database) ExpireCheck() {
+	now := time.Now()
+	tmp := db.exp
+	for k, v := range db.exp {
+		if now.After(v) || now.Equal(v) {
+			delete(db.kv, k)
+			delete(db.hash, k)
+			delete(db.list, k)
+			delete(tmp, k)
+		}
+	}
+	db.exp = tmp
+}
+
 func (db *Database) Rename(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 3 {
 		return "-ERR: RENAME command requires the old key and the new key"
 	}
@@ -252,6 +274,8 @@ func (db *Database) Rename(tokens []string) string {
 func (db *Database) Get(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 2 {
 		return "-ERR: Get commands requires a key\r\n"
 	}
@@ -268,6 +292,8 @@ func (db *Database) Get(tokens []string) string {
 func (db *Database) LLen(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 2 {
 		return "-ERR: LLEN command requires a key\r\n"
 	}
@@ -282,6 +308,8 @@ func (db *Database) LLen(tokens []string) string {
 func (db *Database) LPush(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 3 {
 		return "-ERR: LPUSH command requires a key and a value\r\n"
 	}
@@ -301,6 +329,8 @@ func (db *Database) LPush(tokens []string) string {
 func (db *Database) RPush(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 3 {
 		return "-ERR: RPUSH command requires a key and a value\r\n"
 	}
@@ -317,6 +347,8 @@ func (db *Database) RPush(tokens []string) string {
 func (db *Database) LPop(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 2 {
 		return "-ERR: LPOP command requires a key\r\n"
 	}
@@ -332,6 +364,8 @@ func (db *Database) LPop(tokens []string) string {
 func (db *Database) RPop(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 2 {
 		return "-ERR: RPOP command requires a key\r\n"
 	}
@@ -347,6 +381,8 @@ func (db *Database) RPop(tokens []string) string {
 func (db *Database) LRem(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 4 {
 		return "-ERR: LREM command requires key, count and a value\r\n"
 	}
@@ -405,6 +441,8 @@ func (db *Database) LRem(tokens []string) string {
 func (db *Database) LIndex(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 3 {
 		return "-ERR: LINDEX command requires a key and an index\r\n"
 	}
@@ -431,6 +469,8 @@ func (db *Database) LIndex(tokens []string) string {
 func (db *Database) LSet(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 4 {
 		return "-ERR: LSET requires key, index and a value"
 	}
@@ -464,6 +504,8 @@ func encodeArray(tokens []string) string {
 func (db *Database) LRange(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 4 {
 		return "-ERR: LRANGE command requires key, start and an end\r\n"
 	}
@@ -501,6 +543,8 @@ func (db *Database) LRange(tokens []string) string {
 func (db *Database) HSet(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 4 || len(tokens)%2 == 1 {
 		return "-ERR: HSET command requires key, field and a value\r\n"
 	}
@@ -520,6 +564,8 @@ func (db *Database) HSet(tokens []string) string {
 func (db *Database) HGet(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 3 {
 		return "-ERR: HGET command requires key and field \r\n"
 	}
@@ -539,6 +585,8 @@ func (db *Database) HGet(tokens []string) string {
 func (db *Database) HExists(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 3 {
 		return "-ERR: HEXISTS command requires a key and a field\r\n"
 	}
@@ -557,6 +605,8 @@ func (db *Database) HExists(tokens []string) string {
 func (db *Database) HDel(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 3 {
 		return "-ERR: HDEL command requires a key and at least one field\r\n"
 	}
@@ -579,6 +629,8 @@ func (db *Database) HDel(tokens []string) string {
 func (db *Database) HGetAll(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 2 {
 		return "-ERR: HGETALL command requires a key\r\n"
 	}
@@ -600,6 +652,8 @@ func (db *Database) HGetAll(tokens []string) string {
 func (db *Database) HKeys(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 2 {
 		return "-ERR: HKEYS command requires a key\r\n"
 	}
@@ -615,6 +669,8 @@ func (db *Database) HKeys(tokens []string) string {
 func (db *Database) HVals(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 2 {
 		return "-ERR: HVALS command requires a key\r\n"
 	}
@@ -629,6 +685,8 @@ func (db *Database) HVals(tokens []string) string {
 func (db *Database) HLen(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 2 {
 		return "-ERR: HLEN command requires a key\r\n"
 	}
@@ -644,6 +702,8 @@ func (db *Database) HLen(tokens []string) string {
 func (db *Database) HMSet(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
+	db.ExpireCheck()
+
 	if len(tokens) < 4 || len(tokens)%2 == 1 {
 		return "-ERR: HMSET command requires key, field and a value\r\n"
 	}
