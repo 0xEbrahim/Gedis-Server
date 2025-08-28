@@ -270,7 +270,7 @@ func (db *Database) Get(tokens []string) string {
 
 func (db *Database) LLen(tokens []string) string {
 	if len(tokens) < 2 {
-		return "-ERR: LLEN command required a key\r\n"
+		return "-ERR: LLEN command requires a key\r\n"
 	}
 	key := tokens[1]
 	v, ok := db.list[key]
