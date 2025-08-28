@@ -1,1 +1,1 @@
-RPUSH colors a b c d e f g h i
+RPUSH colors b c d e f g h i
