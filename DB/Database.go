@@ -37,6 +37,7 @@ func GetDBInstance() *Database {
 
 func (db *Database) Flush() {
 	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	println("Flush")
 	err := db.Aof.Truncate(0)
 	if err != nil {
@@ -87,10 +88,12 @@ func (db *Database) Flush() {
 			}
 		}
 	}
-	db.mtx.Unlock()
+
 }
 func (db *Database) Load() {
 	db.mtx.Lock()
+	defer db.mtx.Unlock()
+
 	println("LOAD")
 	sc := bufio.NewScanner(db.Aof)
 	for sc.Scan() {
@@ -107,16 +110,16 @@ func (db *Database) Load() {
 
 		}
 	}
-	db.mtx.Unlock()
+
 }
 
 func (db *Database) Set(tokens []string) string {
 	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 3 {
 		return "-ERR: SET command required a key and a value\r\n"
 	}
 	db.kv[tokens[1]] = tokens[2]
-	db.mtx.Unlock()
 	return "+OK\r\n"
 }
 func (db *Database) Lpush(token []string) string {
@@ -128,15 +131,19 @@ func (db *Database) Hset(tokens []string) string {
 
 func (db *Database) FlushAll(tokens []string) string {
 	db.mtx.Lock()
+	defer db.mtx.Unlock()
+
 	db.kv = make(map[string]string)
 	db.list = make(map[string][]string)
 	db.hash = make(map[string]map[string]string)
-	db.mtx.Unlock()
+
 	return "+OK\r\n"
 }
 
 func (db *Database) Keys(tokens []string) string {
 	db.mtx.Lock()
+	defer db.mtx.Unlock()
+
 	var keys []string
 	for k, _ := range db.kv {
 		keys = append(keys, k)
@@ -147,7 +154,6 @@ func (db *Database) Keys(tokens []string) string {
 	for k, _ := range db.hash {
 		keys = append(keys, k)
 	}
-	db.mtx.Unlock()
 	str := "*" + strconv.Itoa(len(keys)) + "\r\n"
 	for _, it := range keys {
 		str = str + "$" + strconv.Itoa(len(it)) + "\r\n" + it + "\r\n"
@@ -157,6 +163,7 @@ func (db *Database) Keys(tokens []string) string {
 
 func (db *Database) Type(tokens []string) string {
 	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 2 {
 		return "-ERR: TYPE commands requires a key\r\n"
 	}
@@ -176,19 +183,19 @@ func (db *Database) Type(tokens []string) string {
 	} else {
 		str = reflect.TypeOf(db.hash[key])
 	}
-	db.mtx.Unlock()
 	return "$" + strconv.Itoa(len(str.Name())) + "\r\n" + str.Name() + "\r\n"
 }
 
 func (db *Database) Del(tokens []string) string {
 	db.mtx.Lock()
+	defer db.mtx.Unlock()
+
 	if len(tokens) < 2 {
 		return "-ERR: DEL|UNLINK commands requires a key\r\n"
 	}
 	delete(db.kv, tokens[1])
 	delete(db.list, tokens[1])
 	delete(db.hash, tokens[1])
-	db.mtx.Unlock()
 
 	return "+OK\r\n"
 }
@@ -223,7 +230,7 @@ func (db *Database) Expire(tokens []string) string {
 
 func (db *Database) Rename(tokens []string) string {
 	db.mtx.Lock()
-
+	defer db.mtx.Unlock()
 	if len(tokens) < 3 {
 		return "-ERR: RENAME command requires the old key and the new key"
 	}
@@ -232,11 +239,11 @@ func (db *Database) Rename(tokens []string) string {
 
 func (db *Database) Get(tokens []string) string {
 	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 2 {
 		return "-ERR: Get commands requires a key\r\n"
 	}
 	str, ok := db.kv[tokens[1]]
-	db.mtx.Unlock()
 	var ret string
 	if ok {
 		ret = "$" + strconv.Itoa(len(str)) + "\r\n" + str + "\r\n"
