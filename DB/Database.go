@@ -292,13 +292,16 @@ func (db *Database) LPush(tokens []string) string {
 	if !ok {
 		return ":0\r\n"
 	}
-	v = append(
-		[]string{
-			tokens[2],
-		}, v...)
+	for i := 2; i < len(tokens); i++ {
+		v = append(
+			[]string{
+				tokens[i],
+			}, v...)
+	}
 	db.list[tokens[1]] = v
 	return ":" + strconv.Itoa(len(v)) + "\r\n"
 }
+
 func (db *Database) RPush(tokens []string) string {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
@@ -309,8 +312,10 @@ func (db *Database) RPush(tokens []string) string {
 	if !ok {
 		return ":0\r\n"
 	}
-	v = append(
-		v, tokens[2])
+	for i := 2; i < len(tokens); i++ {
+		v = append(
+			v, tokens[i])
+	}
 	db.list[tokens[1]] = v
 	return ":" + strconv.Itoa(len(v)) + "\r\n"
 
