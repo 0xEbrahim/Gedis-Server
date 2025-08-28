@@ -336,14 +336,41 @@ func (db *Database) RPop(tokens []string) string {
 	return "$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"
 }
 func (db *Database) LRem(tokens []string) string {
+	if len(tokens) < 4 {
+		return "-ERR: LREM command requires key, count and a value\r\n"
+	}
+	key := tokens[1]
+	count, err := strconv.Atoi(tokens[2])
+	if err != nil {
+		return "-ERR: count must be a number\r\n"
+	}
+	value := tokens[3]
+
 	return ""
 
 }
 func (db *Database) LIndex(tokens []string) string {
+	if len(tokens) < 3 {
+		return "-ERR: LINDEX command requires a key and an index\r\n"
+	}
+	key := tokens[1]
+	index, err := strconv.Atoi(tokens[2])
+	if err != nil {
+		return "-ERR: index must be a number\r\n"
+	}
 	return ""
 
 }
 func (db *Database) LSet(tokens []string) string {
+	if len(tokens) < 4 {
+		return "-ERR: LSET requires key, index and a value"
+	}
+	key := tokens[1]
+	index, err := strconv.Atoi(tokens[2])
+	if err != nil {
+		return "-ERR: index must be a number\r\n"
+	}
+	value := tokens[3]
 	return ""
 
 }
