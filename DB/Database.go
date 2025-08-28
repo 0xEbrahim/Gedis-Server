@@ -530,6 +530,15 @@ func (db *Database) HExists(tokens []string) string {
 	if len(tokens) < 3 {
 		return "-ERR: HEXISTS command requires a key and a field\r\n"
 	}
+	key := tokens[1]
+	_, ok := db.hash[key]
+	if !ok {
+		return ":0\r\n"
+	}
+	_, ok = db.hash[key][tokens[2]]
+	if !ok {
+		return ":0\r\n"
+	}
 	return ":1\r\n"
 }
 
@@ -537,7 +546,20 @@ func (db *Database) HDel(tokens []string) string {
 	if len(tokens) < 3 {
 		return "-ERR: HDEL command requires a key and at least one field\r\n"
 	}
-	return ":1\r\n"
+	key := tokens[1]
+	_, ok := db.hash[key]
+	if !ok {
+		return ":0\r\n"
+	}
+	cnt := 0
+	for i := 2; i < len(tokens); i++ {
+		_, ok = db.hash[key][tokens[i]]
+		if ok {
+			delete(db.hash[key], tokens[i])
+			cnt = cnt + 1
+		}
+	}
+	return ":" + strconv.Itoa(cnt) + "\r\n"
 }
 
 func (db *Database) HGetAll(tokens []string) string {
