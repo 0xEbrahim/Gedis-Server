@@ -322,8 +322,8 @@ func (db *Database) LPop(tokens []string) string {
 		return "-ERR: LPOP command requires a key\r\n"
 	}
 	v, ok := db.list[tokens[1]]
-	if !ok {
-		return ":0\r\n"
+	if !ok || len(v) == 0 {
+		return "_\r\n"
 	}
 	value := v[0]
 	v = v[1:]
@@ -337,8 +337,8 @@ func (db *Database) RPop(tokens []string) string {
 		return "-ERR: RPOP command requires a key\r\n"
 	}
 	v, ok := db.list[tokens[1]]
-	if !ok {
-		return ":0\r\n"
+	if !ok || len(v) == 0 {
+		return "_\r\n"
 	}
 	value := v[len(v)-1]
 	v = v[:len(v)-1]
@@ -357,9 +357,51 @@ func (db *Database) LRem(tokens []string) string {
 		return "-ERR: count must be a number\r\n"
 	}
 	value := tokens[3]
-
-	return ""
-
+	removed := 0
+	v, ok := db.list[tokens[1]]
+	if !ok {
+		return ":0\r\n"
+	}
+	if count == 0 {
+		var nList []string
+		for i := 0; i < len(v); i++ {
+			if v[i] != value {
+				nList = append(nList, v[i])
+			} else {
+				removed++
+			}
+		}
+		db.list[key] = nList
+		return ":" + strconv.Itoa(removed) + "\r\n"
+	} else if count > 0 {
+		var nList []string
+		for i := 0; i < len(v); i++ {
+			if v[i] != value {
+				nList = append(nList, v[i])
+			} else {
+				if removed == count {
+					nList = append(nList, v[i])
+				}
+				removed = removed + 1
+			}
+		}
+		db.list[key] = nList
+		return ":" + strconv.Itoa(removed) + "\r\n"
+	} else {
+		var nList []string
+		for i := len(v) - 1; i >= 0; i-- {
+			if v[i] != value {
+				nList = append(nList, v[i])
+			} else {
+				if removed == count {
+					nList = append(nList, v[i])
+				}
+				removed = removed - 1
+			}
+		}
+		db.list[key] = nList
+		return ":" + strconv.Itoa(removed) + "\r\n"
+	}
 }
 func (db *Database) LIndex(tokens []string) string {
 	db.mtx.Lock()
