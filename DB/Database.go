@@ -100,7 +100,7 @@ func (db *Database) Load() {
 		case "SET":
 			db.Set(tokens)
 		case "LPUSH":
-			db.Lpush(tokens)
+			db.LPush(tokens)
 		case "HSET":
 			db.Hset(tokens)
 		default:
@@ -118,9 +118,6 @@ func (db *Database) Set(tokens []string) string {
 	}
 	db.kv[tokens[1]] = tokens[2]
 	return "+OK\r\n"
-}
-func (db *Database) Lpush(token []string) string {
-	return ""
 }
 func (db *Database) Hset(tokens []string) string {
 	return ""
@@ -271,7 +268,7 @@ func (db *Database) Get(tokens []string) string {
 	return ret
 }
 
-func (db *Database) Llen(tokens []string) string {
+func (db *Database) LLen(tokens []string) string {
 	if len(tokens) < 2 {
 		return "-ERR: LLEN command required a key\r\n"
 	}
@@ -281,4 +278,32 @@ func (db *Database) Llen(tokens []string) string {
 		return "_\r\n"
 	}
 	return ":" + strconv.Itoa(len(v)) + "\r\n"
+}
+
+func (db *Database) LPush(tokens []string) string {
+	return ""
+}
+func (db *Database) RPush(tokens []string) string {
+	return ""
+
+}
+func (db *Database) LPop(tokens []string) string {
+	return ""
+
+}
+func (db *Database) RPop(tokens []string) string {
+	return ""
+
+}
+func (db *Database) LRem(tokens []string) string {
+	return ""
+
+}
+func (db *Database) LIndex(tokens []string) string {
+	return ""
+
+}
+func (db *Database) LSet(tokens []string) string {
+	return ""
+
 }
