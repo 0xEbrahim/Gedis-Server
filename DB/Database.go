@@ -500,14 +500,30 @@ func (db *Database) HSet(tokens []string) string {
 	if len(tokens) < 4 || len(tokens)%2 == 1 {
 		return "-ERR: HSET command requires key, field and a value\r\n"
 	}
-
-	return ":1\r\n"
+	key := tokens[1]
+	cnt := 0
+	for i := 2; i < len(tokens); i = i + 2 {
+		field := tokens[i]
+		value := tokens[i+1]
+		db.hash[key][field] = value
+	}
+	return ":" + strconv.Itoa(cnt) + "\r\n"
 }
 func (db *Database) HGet(tokens []string) string {
 	if len(tokens) < 3 {
 		return "-ERR: HGET command requires key and field \r\n"
 	}
-	return ""
+	key := tokens[1]
+	_, ok := db.hash[key]
+	if !ok {
+		return "_\r\n"
+	}
+	v, ok := db.hash[key][tokens[2]]
+	if !ok {
+		return "_\r\n"
+	}
+	str := "$" + strconv.Itoa(len(v)) + "\r\n" + v + "\r\n"
+	return str
 }
 
 func (db *Database) HExists(tokens []string) string {
