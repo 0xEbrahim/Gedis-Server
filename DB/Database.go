@@ -29,7 +29,7 @@ func GetDBInstance() *Database {
 		if err != nil || file == nil {
 			log.Fatal("Unable to open AOF")
 		}
-		instance = &Database{Aof: file, kv: map[string]string{}, list: map[string][]string{}, hash: map[string]map[string]string{}}
+		instance = &Database{Aof: file, kv: map[string]string{}, list: map[string][]string{}, hash: map[string]map[string]string{}, mtx: &sync.Mutex{}}
 
 	})
 	return instance
@@ -91,9 +91,6 @@ func (db *Database) Flush() {
 
 }
 func (db *Database) Load() {
-	db.mtx.Lock()
-	defer db.mtx.Unlock()
-
 	println("LOAD")
 	sc := bufio.NewScanner(db.Aof)
 	for sc.Scan() {
@@ -234,7 +231,28 @@ func (db *Database) Rename(tokens []string) string {
 	if len(tokens) < 3 {
 		return "-ERR: RENAME command requires the old key and the new key"
 	}
-	return ""
+	key := tokens[1]
+	_, inKV := db.kv[key]
+	_, inList := db.list[key]
+	_, inHash := db.hash[key]
+	exists := inKV || inList || inHash
+	if !exists {
+		return "-ERR: Key does not exist\r\n"
+	}
+	if inKV {
+		value := db.kv[key]
+		delete(db.kv, key)
+		db.kv[tokens[2]] = value
+	} else if inList {
+		value := db.list[key]
+		delete(db.list, key)
+		db.list[tokens[2]] = value
+	} else {
+		value := db.hash[key]
+		delete(db.hash, key)
+		db.hash[tokens[2]] = value
+	}
+	return "#true\r\n"
 }
 
 func (db *Database) Get(tokens []string) string {
