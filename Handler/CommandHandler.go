@@ -142,7 +142,35 @@ func (ch *CommandHandler) ExecCommand(str string) string {
 		return ch.db.Set(tokens)
 	case "GET":
 		return ch.db.Get(tokens)
+	case "PING":
+		return "+PONG\r\n"
+	case "ECHO":
+		return echoReply(tokens)
+	case "FLUSHALL":
+		return ch.db.FlushAll(tokens)
+	case "KEYS":
+		return ch.db.Keys(tokens)
+	case "TYPE":
+		return ch.db.Type(tokens)
+	case "DEL":
+		return ch.db.Del(tokens)
+	case "UNLINK":
+		return ch.db.Del(tokens)
+	case "HSET":
+		return ch.db.Hset(tokens)
+	case "EXPIRE":
+		return ch.db.Expire(tokens)
+	case "RENAME":
+		return ch.db.Rename(tokens)
 	default:
 		return "-ERR UNKNOWN COMMAND\r\n"
 	}
+}
+
+func echoReply(tokens []string) string {
+	if len(tokens) < 2 {
+		return "-ERR: Echo must have a message\r\n"
+	}
+	str := tokens[1]
+	return "$" + strconv.Itoa(len(str)) + "\r\n" + str + "\r\n"
 }

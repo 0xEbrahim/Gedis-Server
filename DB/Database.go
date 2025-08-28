@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Database struct {
@@ -14,6 +15,7 @@ type Database struct {
 	kv   map[string]string
 	list map[string][]string
 	hash map[string]map[string]string
+	exp  map[string]time.Time
 	mtx  *sync.Mutex
 }
 
@@ -108,15 +110,65 @@ func (db *Database) Load() {
 }
 
 func (db *Database) Set(tokens []string) string {
+	if len(tokens) < 3 {
+		return "-ERR: SET command required a key and a value\r\n"
+	}
 	db.kv[tokens[1]] = tokens[2]
 	return "+OK\r\n"
 }
-func (db *Database) Lpush(token []string) {
-
+func (db *Database) Lpush(token []string) string {
+	return ""
 }
-func (db *Database) Hset(tokens []string) {}
+func (db *Database) Hset(tokens []string) string {
+	return ""
+}
+
+func (db *Database) FlushAll(tokens []string) string {
+	return "+OK\r\n"
+}
+
+func (db *Database) Keys(tokens []string) string {
+	return ""
+}
+
+func (db *Database) Type(tokens []string) string {
+	if len(tokens) < 2 {
+		return "-ERR: TYPE commands requires a key\r\n"
+	}
+	return ""
+}
+
+func (db *Database) Del(tokens []string) string {
+	if len(tokens) < 2 {
+		return "-ERR: DEL|UNLINK commands requires a key\r\n"
+	}
+	return ""
+}
+
+func (db *Database) Expire(tokens []string) string {
+	if len(tokens) < 3 {
+		return "-ERR: EXPIRE command requires a key and a time in seconds"
+	}
+	return ""
+}
+
+func (db *Database) Rename(tokens []string) string {
+	if len(tokens) < 3 {
+		return "-ERR: RENAME command requires the old key and the new key"
+	}
+	return ""
+}
+
 func (db *Database) Get(tokens []string) string {
-	str := db.kv[tokens[1]]
-	ret := "$" + strconv.Itoa(len(str)) + "\r\n" + str + "\r\n"
+	if len(tokens) < 2 {
+		return "-ERR: Get commands requires a key\r\n"
+	}
+	str, ok := db.kv[tokens[1]]
+	var ret string
+	if ok {
+		ret = "$" + strconv.Itoa(len(str)) + "\r\n" + str + "\r\n"
+	} else {
+		ret = "_\r\n"
+	}
 	return ret
 }
