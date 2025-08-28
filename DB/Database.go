@@ -29,7 +29,7 @@ func GetDBInstance() *Database {
 		if err != nil || file == nil {
 			log.Fatal("Unable to open AOF")
 		}
-		instance = &Database{Aof: file, kv: map[string]string{}, list: map[string][]string{}, hash: map[string]map[string]string{}, mtx: &sync.Mutex{}}
+		instance = &Database{Aof: file, kv: map[string]string{}, list: map[string][]string{}, hash: map[string]map[string]string{}, exp: map[string]time.Time{}, mtx: &sync.Mutex{}}
 
 	})
 	return instance
@@ -55,7 +55,7 @@ func (db *Database) Flush() {
 		}
 	}
 	for k, v := range db.list {
-		_, err := db.Aof.Write([]byte("LPUSH"))
+		_, err := db.Aof.Write([]byte("RPUSH"))
 		if err != nil {
 			println("Error while writing AOF", err.Error())
 			return
@@ -99,8 +99,8 @@ func (db *Database) Load() {
 		switch tokens[0] {
 		case "SET":
 			db.Set(tokens)
-		case "LPUSH":
-			db.LPush(tokens)
+		case "RPUSH":
+			db.RPush(tokens)
 		case "HSET":
 			db.Hset(tokens)
 		default:
@@ -288,11 +288,10 @@ func (db *Database) LPush(tokens []string) string {
 	if len(tokens) < 3 {
 		return "-ERR: LPUSH command requires a key and a value\r\n"
 	}
-	v, ok := db.list[tokens[1]]
-	if !ok {
-		return ":0\r\n"
-	}
+
+	v, _ := db.list[tokens[1]]
 	for i := 2; i < len(tokens); i++ {
+
 		v = append(
 			[]string{
 				tokens[i],
@@ -308,10 +307,8 @@ func (db *Database) RPush(tokens []string) string {
 	if len(tokens) < 3 {
 		return "-ERR: RPUSH command requires a key and a value\r\n"
 	}
-	v, ok := db.list[tokens[1]]
-	if !ok {
-		return ":0\r\n"
-	}
+	v, _ := db.list[tokens[1]]
+
 	for i := 2; i < len(tokens); i++ {
 		v = append(
 			v, tokens[i])
@@ -425,7 +422,7 @@ func (db *Database) LIndex(tokens []string) string {
 	}
 	n := len(v)
 	if index < 0 {
-		index = index + n - 1
+		index = index + n
 	}
 	if index >= n || index < 0 {
 		return "_\r\n"
@@ -451,11 +448,53 @@ func (db *Database) LSet(tokens []string) string {
 	}
 	n := len(v)
 	if index < 0 {
-		index = index + n - 1
+		index = index + n
 	}
 	if index >= n || index < 0 {
 		return "_\r\n"
 	}
 	db.list[key][index] = tokens[3]
 	return "+OK\r\n"
+}
+func encodeArray(tokens []string) string {
+	encoded := "*" + strconv.Itoa(len(tokens)) + "\r\n"
+	for _, it := range tokens {
+		encoded = encoded + "$" + strconv.Itoa(len(it)) + "\r\n" + it + "\r\n"
+	}
+	return encoded
+}
+
+func (db *Database) LRange(tokens []string) string {
+	if len(tokens) < 4 {
+		return "-ERR: LRANGE command requires key, start and an end\r\n"
+	}
+	key := tokens[1]
+	lst, ok := db.list[key]
+	if !ok {
+		return "_\r\n"
+	}
+	start, err := strconv.Atoi(tokens[2])
+	if err != nil {
+		return "-ERR: start must be an integer\r\n"
+	}
+	end, err := strconv.Atoi(tokens[3])
+	if err != nil {
+		return "-ERR: end must be an integer\r\n"
+	}
+	if start < 0 {
+		start = start + len(lst)
+	}
+	if end < 0 {
+		end = end + len(lst)
+	}
+	if start > end {
+		return "_\r\n"
+	}
+	end = min(end, len(lst)-1)
+	start = max(0, start)
+	var arr []string
+	for i := start; i <= end; i++ {
+		arr = append(arr, lst[i])
+	}
+	return encodeArray(arr)
 }

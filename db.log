@@ -1,3 +1,1 @@
-SET NAME ebrahim
-SET age 22
-SET location cairo
+RPUSH colors a b c d e f g h i

@@ -178,6 +178,8 @@ func (ch *CommandHandler) ExecCommand(str string) string {
 		return ch.db.LSet(tokens)
 	case "LREM":
 		return ch.db.LRem(tokens)
+	case "LRANGE":
+		return ch.db.LRange(tokens)
 	default:
 		return "-ERR UNKNOWN COMMAND\r\n"
 	}
