@@ -567,7 +567,19 @@ func (db *Database) HGetAll(tokens []string) string {
 	if len(tokens) < 2 {
 		return "-ERR: HGETALL command requires a key\r\n"
 	}
-	return ""
+	mp, ok := db.hash[tokens[1]]
+	if !ok {
+		return "_\r\n"
+	}
+	cnt := 0
+	str := ""
+	for k, v := range mp {
+		str = str + "$" + strconv.Itoa(len(k)) + "\r\n" + k + "\r\n"
+		str = str + "$" + strconv.Itoa(len(v)) + "\r\n" + v + "\r\n"
+		cnt = cnt + 1
+	}
+	str = "%" + strconv.Itoa(cnt) + "\r\n" + str
+	return str
 }
 
 func (db *Database) HKeys(tokens []string) string {
