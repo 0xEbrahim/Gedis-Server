@@ -310,12 +310,28 @@ func (db *Database) RPush(tokens []string) string {
 
 }
 func (db *Database) LPop(tokens []string) string {
-	return ""
-
+	if len(tokens) < 2 {
+		return "-ERR: LPOP command requires a key\r\n"
+	}
+	v, ok := db.list[tokens[1]]
+	if !ok {
+		return ":0\r\n"
+	}
+	v = v[1:]
+	db.list[tokens[1]] = v
+	return ":" + strconv.Itoa(len(v)) + "\r\n"
 }
 func (db *Database) RPop(tokens []string) string {
-	return ""
-
+	if len(tokens) < 2 {
+		return "-ERR: RPOP command requires a key\r\n"
+	}
+	v, ok := db.list[tokens[1]]
+	if !ok {
+		return ":0\r\n"
+	}
+	v = v[:len(v)-1]
+	db.list[tokens[1]] = v
+	return ":" + strconv.Itoa(len(v)) + "\r\n"
 }
 func (db *Database) LRem(tokens []string) string {
 	return ""
