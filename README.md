@@ -1,6 +1,7 @@
 # Gedis - A Redis-like In-Memory Database Server in Go
 
 Gedis is a lightweight, Redis-compatible in-memory database server written in Go. It implements a subset of Redis commands and protocols, providing key-value storage, list operations, and hash data structures with persistence support.
+Gedis is compatiable with the official redis-cli and also works with my Gedis-client [Gedis-Client](https://github.com/0xEbrahim/Gedis)
 
 ## Features
 
@@ -62,6 +63,7 @@ Gedis is a lightweight, Redis-compatible in-memory database server written in Go
 
 ### Building from Source
 
+- Connect with the official redis-cli PORT = 6379
 ```bash
 # Clone the repository
 git clone https://https://github.com/0xEbrahim/Gedis-Server
@@ -72,10 +74,21 @@ go build -o gedis ./
 
 # Run the server (default port: 6379)
 ./gedis
-
-# Run on specific port
-./gedis -p <port>
 ```
+
+- Connect with custom client Gedis-client [Gedis-Client](https://github.com/0xEbrahim/Gedis)
+```bash
+# Clone the repository
+git clone https://https://github.com/0xEbrahim/Gedis-Server
+cd Gedis-Server
+
+# Build the project
+go build -o gedis ./
+
+# Run the server on the same port that you will run the client on
+./gedis -p <PORT>
+```
+
 ---
 ## Features & Roadmap
 
