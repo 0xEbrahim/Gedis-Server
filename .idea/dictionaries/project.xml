@@ -3,6 +3,7 @@
     <words>
       <w>flushall</w>
       <w>hset</w>
+      <w>llen</w>
     </words>
   </dictionary>
 </component>

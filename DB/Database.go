@@ -100,7 +100,7 @@ func (db *Database) Load() {
 		case "SET":
 			db.Set(tokens)
 		case "LPUSH":
-			db.Lpush(tokens)
+			db.LPush(tokens)
 		case "HSET":
 			db.Hset(tokens)
 		default:
@@ -118,9 +118,6 @@ func (db *Database) Set(tokens []string) string {
 	}
 	db.kv[tokens[1]] = tokens[2]
 	return "+OK\r\n"
-}
-func (db *Database) Lpush(token []string) string {
-	return ""
 }
 func (db *Database) Hset(tokens []string) string {
 	return ""
@@ -269,4 +266,191 @@ func (db *Database) Get(tokens []string) string {
 		ret = "_\r\n"
 	}
 	return ret
+}
+
+func (db *Database) LLen(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+	if len(tokens) < 2 {
+		return "-ERR: LLEN command requires a key\r\n"
+	}
+	key := tokens[1]
+	v, ok := db.list[key]
+	if !ok {
+		return "_\r\n"
+	}
+	return ":" + strconv.Itoa(len(v)) + "\r\n"
+}
+
+func (db *Database) LPush(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+	if len(tokens) < 3 {
+		return "-ERR: LPUSH command requires a key and a value\r\n"
+	}
+	v, ok := db.list[tokens[1]]
+	if !ok {
+		return ":0\r\n"
+	}
+	v = append(
+		[]string{
+			tokens[2],
+		}, v...)
+	db.list[tokens[1]] = v
+	return ":" + strconv.Itoa(len(v)) + "\r\n"
+}
+func (db *Database) RPush(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+	if len(tokens) < 3 {
+		return "-ERR: RPUSH command requires a key and a value\r\n"
+	}
+	v, ok := db.list[tokens[1]]
+	if !ok {
+		return ":0\r\n"
+	}
+	v = append(
+		v, tokens[2])
+	db.list[tokens[1]] = v
+	return ":" + strconv.Itoa(len(v)) + "\r\n"
+
+}
+func (db *Database) LPop(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+	if len(tokens) < 2 {
+		return "-ERR: LPOP command requires a key\r\n"
+	}
+	v, ok := db.list[tokens[1]]
+	if !ok || len(v) == 0 {
+		return "_\r\n"
+	}
+	value := v[0]
+	v = v[1:]
+	db.list[tokens[1]] = v
+	return "$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"
+}
+func (db *Database) RPop(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+	if len(tokens) < 2 {
+		return "-ERR: RPOP command requires a key\r\n"
+	}
+	v, ok := db.list[tokens[1]]
+	if !ok || len(v) == 0 {
+		return "_\r\n"
+	}
+	value := v[len(v)-1]
+	v = v[:len(v)-1]
+	db.list[tokens[1]] = v
+	return "$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"
+}
+func (db *Database) LRem(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+	if len(tokens) < 4 {
+		return "-ERR: LREM command requires key, count and a value\r\n"
+	}
+	key := tokens[1]
+	count, err := strconv.Atoi(tokens[2])
+	if err != nil {
+		return "-ERR: count must be a number\r\n"
+	}
+	value := tokens[3]
+	removed := 0
+	v, ok := db.list[tokens[1]]
+	if !ok {
+		return ":0\r\n"
+	}
+	if count == 0 {
+		var nList []string
+		for i := 0; i < len(v); i++ {
+			if v[i] != value {
+				nList = append(nList, v[i])
+			} else {
+				removed++
+			}
+		}
+		db.list[key] = nList
+		return ":" + strconv.Itoa(removed) + "\r\n"
+	} else if count > 0 {
+		var nList []string
+		for i := 0; i < len(v); i++ {
+			if v[i] != value {
+				nList = append(nList, v[i])
+			} else {
+				if removed == count {
+					nList = append(nList, v[i])
+				}
+				removed = removed + 1
+			}
+		}
+		db.list[key] = nList
+		return ":" + strconv.Itoa(removed) + "\r\n"
+	} else {
+		var nList []string
+		for i := len(v) - 1; i >= 0; i-- {
+			if v[i] != value {
+				nList = append(nList, v[i])
+			} else {
+				if removed == count {
+					nList = append(nList, v[i])
+				}
+				removed = removed - 1
+			}
+		}
+		db.list[key] = nList
+		return ":" + strconv.Itoa(removed) + "\r\n"
+	}
+}
+func (db *Database) LIndex(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+	if len(tokens) < 3 {
+		return "-ERR: LINDEX command requires a key and an index\r\n"
+	}
+	key := tokens[1]
+	index, err := strconv.Atoi(tokens[2])
+	if err != nil {
+		return "-ERR: index must be a number\r\n"
+	}
+	v, ok := db.list[key]
+	if !ok {
+		return ":0\r\n"
+	}
+	n := len(v)
+	if index < 0 {
+		index = index + n - 1
+	}
+	if index >= n || index < 0 {
+		return "_\r\n"
+	}
+	value := v[index]
+	return "$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"
+}
+
+func (db *Database) LSet(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+	if len(tokens) < 4 {
+		return "-ERR: LSET requires key, index and a value"
+	}
+	key := tokens[1]
+	index, err := strconv.Atoi(tokens[2])
+	if err != nil {
+		return "-ERR: index must be a number\r\n"
+	}
+	v, ok := db.list[key]
+	if !ok {
+		return ":0\r\n"
+	}
+	n := len(v)
+	if index < 0 {
+		index = index + n - 1
+	}
+	if index >= n || index < 0 {
+		return "_\r\n"
+	}
+	db.list[key][index] = tokens[3]
+	return "+OK\r\n"
 }

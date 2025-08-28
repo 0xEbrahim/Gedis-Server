@@ -162,6 +162,22 @@ func (ch *CommandHandler) ExecCommand(str string) string {
 		return ch.db.Expire(tokens)
 	case "RENAME":
 		return ch.db.Rename(tokens)
+	case "LLEN":
+		return ch.db.LLen(tokens)
+	case "LPUSH":
+		return ch.db.LPush(tokens)
+	case "RPUSH":
+		return ch.db.RPush(tokens)
+	case "LPOP":
+		return ch.db.LPop(tokens)
+	case "RPOP":
+		return ch.db.RPop(tokens)
+	case "LINDEX":
+		return ch.db.LIndex(tokens)
+	case "LSET":
+		return ch.db.LSet(tokens)
+	case "LREM":
+		return ch.db.LRem(tokens)
 	default:
 		return "-ERR UNKNOWN COMMAND\r\n"
 	}
