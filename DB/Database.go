@@ -317,9 +317,10 @@ func (db *Database) LPop(tokens []string) string {
 	if !ok {
 		return ":0\r\n"
 	}
+	value := v[0]
 	v = v[1:]
 	db.list[tokens[1]] = v
-	return ":" + strconv.Itoa(len(v)) + "\r\n"
+	return "$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"
 }
 func (db *Database) RPop(tokens []string) string {
 	if len(tokens) < 2 {
@@ -329,9 +330,10 @@ func (db *Database) RPop(tokens []string) string {
 	if !ok {
 		return ":0\r\n"
 	}
+	value := v[len(v)-1]
 	v = v[:len(v)-1]
 	db.list[tokens[1]] = v
-	return ":" + strconv.Itoa(len(v)) + "\r\n"
+	return "$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"
 }
 func (db *Database) LRem(tokens []string) string {
 	return ""
