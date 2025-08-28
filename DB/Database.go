@@ -509,6 +509,9 @@ func (db *Database) HSet(tokens []string) string {
 	for i := 2; i < len(tokens); i = i + 2 {
 		field := tokens[i]
 		value := tokens[i+1]
+		if db.hash[key] == nil {
+			db.hash[key] = map[string]string{}
+		}
 		db.hash[key][field] = value
 		cnt = cnt + 1
 	}
@@ -648,6 +651,9 @@ func (db *Database) HMSet(tokens []string) string {
 	for i := 2; i < len(tokens); i = i + 2 {
 		field := tokens[i]
 		value := tokens[i+1]
+		if db.hash[key] == nil {
+			db.hash[key] = map[string]string{}
+		}
 		db.hash[key][field] = value
 	}
 	return ":OK\r\n"
