@@ -156,8 +156,6 @@ func (ch *CommandHandler) ExecCommand(str string) string {
 		return ch.db.Del(tokens)
 	case "UNLINK":
 		return ch.db.Del(tokens)
-	case "HSET":
-		return ch.db.Hset(tokens)
 	case "EXPIRE":
 		return ch.db.Expire(tokens)
 	case "RENAME":
@@ -178,6 +176,26 @@ func (ch *CommandHandler) ExecCommand(str string) string {
 		return ch.db.LSet(tokens)
 	case "LREM":
 		return ch.db.LRem(tokens)
+	case "LRANGE":
+		return ch.db.LRange(tokens)
+	case "HSET":
+		return ch.db.HSet(tokens)
+	case "HGET":
+		return ch.db.HGet(tokens)
+	case "HEXISTS":
+		return ch.db.HExists(tokens)
+	case "HDEL":
+		return ch.db.HDel(tokens)
+	case "HGETALL":
+		return ch.db.HGetAll(tokens)
+	case "HKEYS":
+		return ch.db.HKeys(tokens)
+	case "HVALS":
+		return ch.db.HVals(tokens)
+	case "HLEN":
+		return ch.db.HLen(tokens)
+	case "HMSET":
+		return ch.db.HMSet(tokens)
 	default:
 		return "-ERR UNKNOWN COMMAND\r\n"
 	}
