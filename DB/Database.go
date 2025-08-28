@@ -269,6 +269,8 @@ func (db *Database) Get(tokens []string) string {
 }
 
 func (db *Database) LLen(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 2 {
 		return "-ERR: LLEN command requires a key\r\n"
 	}
@@ -281,6 +283,8 @@ func (db *Database) LLen(tokens []string) string {
 }
 
 func (db *Database) LPush(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 3 {
 		return "-ERR: LPUSH command requires a key and a value\r\n"
 	}
@@ -296,6 +300,8 @@ func (db *Database) LPush(tokens []string) string {
 	return ":" + strconv.Itoa(len(v)) + "\r\n"
 }
 func (db *Database) RPush(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 3 {
 		return "-ERR: RPUSH command requires a key and a value\r\n"
 	}
@@ -310,6 +316,8 @@ func (db *Database) RPush(tokens []string) string {
 
 }
 func (db *Database) LPop(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 2 {
 		return "-ERR: LPOP command requires a key\r\n"
 	}
@@ -323,6 +331,8 @@ func (db *Database) LPop(tokens []string) string {
 	return "$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"
 }
 func (db *Database) RPop(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 2 {
 		return "-ERR: RPOP command requires a key\r\n"
 	}
@@ -336,6 +346,8 @@ func (db *Database) RPop(tokens []string) string {
 	return "$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"
 }
 func (db *Database) LRem(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 4 {
 		return "-ERR: LREM command requires key, count and a value\r\n"
 	}
@@ -350,6 +362,8 @@ func (db *Database) LRem(tokens []string) string {
 
 }
 func (db *Database) LIndex(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 3 {
 		return "-ERR: LINDEX command requires a key and an index\r\n"
 	}
@@ -361,7 +375,10 @@ func (db *Database) LIndex(tokens []string) string {
 	return ""
 
 }
+
 func (db *Database) LSet(tokens []string) string {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
 	if len(tokens) < 4 {
 		return "-ERR: LSET requires key, index and a value"
 	}
