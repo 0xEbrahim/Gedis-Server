@@ -281,6 +281,18 @@ func (db *Database) LLen(tokens []string) string {
 }
 
 func (db *Database) LPush(tokens []string) string {
+	if len(tokens) < 3 {
+		return "-ERR: LPUSH command requires a key and a value\r\n"
+	}
+	v, ok := db.list[tokens[1]]
+	if !ok {
+		return "_\r\n"
+	}
+	v = append(
+		[]string{
+			tokens[2],
+		}, v...)
+	db.list[tokens[1]] = v
 	return ""
 }
 func (db *Database) RPush(tokens []string) string {
