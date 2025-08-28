@@ -414,8 +414,19 @@ func (db *Database) LIndex(tokens []string) string {
 	if err != nil {
 		return "-ERR: index must be a number\r\n"
 	}
-	return ""
-
+	v, ok := db.list[key]
+	if !ok {
+		return ":0\r\n"
+	}
+	n := len(v)
+	if index < 0 {
+		index = index + n - 1
+	}
+	if index >= n || index < 0 {
+		return "_\r\n"
+	}
+	value := v[index]
+	return "$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"
 }
 
 func (db *Database) LSet(tokens []string) string {
@@ -429,7 +440,17 @@ func (db *Database) LSet(tokens []string) string {
 	if err != nil {
 		return "-ERR: index must be a number\r\n"
 	}
-	value := tokens[3]
-	return ""
-
+	v, ok := db.list[key]
+	if !ok {
+		return ":0\r\n"
+	}
+	n := len(v)
+	if index < 0 {
+		index = index + n - 1
+	}
+	if index >= n || index < 0 {
+		return "_\r\n"
+	}
+	db.list[key][index] = tokens[3]
+	return "+OK\r\n"
 }
