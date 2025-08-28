@@ -76,3 +76,42 @@ go build -o gedis ./
 # Run on specific port
 ./gedis -p <port>
 ```
+---
+## Features & Roadmap
+
+### Core Data Structures
+- [x] Strings (`SET`, `GET`, `DEL`, `EXISTS`)
+- [x] Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
+- [x] Hashes (`HSET`, `HGET`, `HGETALL`, `HDEL`)
+- [ ] Sets (`SADD`, `SMEMBERS`, `SREM`)
+- [ ] Sorted Sets (`ZADD`, `ZRANGE`, `ZREM`)
+
+### Key Management
+- [x] `EXPIRE` (set key expiration in seconds)
+- [x] `TTL` (check remaining time-to-live)
+- [x] Automatic key expiration cleanup
+
+### Persistence
+- [x] Append-Only File (AOF) persistence
+- [ ] RDB-like snapshot persistence
+
+### Pub/Sub System
+- [ ] `PUBLISH`
+- [ ] `SUBSCRIBE`
+- [ ] `UNSUBSCRIBE`
+
+### Server & Networking
+- [x] TCP server implementation
+- [x] Custom client support
+- [x] Compatibility with official `redis-cli`
+- [x] RESP protocol support (full compliance)
+
+##  Future Improvements
+- [ ] Transactions (`MULTI`, `EXEC`, `DISCARD`)
+- [ ] Pub/Sub system implementation
+- [ ] Snapshot persistence (RDB-like)
+- [ ] Clustering / replication
+- [ ] Authentication (`AUTH` command)
+- [ ] Performance optimizations (eviction policies, memory management)
+
+---
