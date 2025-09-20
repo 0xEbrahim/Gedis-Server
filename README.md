@@ -58,7 +58,7 @@ Gedis is compatiable with the official redis-cli and also works with my Gedis-cl
 ## Installation
 
 ### Prerequisites
-- Go 1.16 or higher
+- Go 1.17 or higher
 - Git
 
 ### Building from Source
